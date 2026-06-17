@@ -153,6 +153,8 @@ body{background:var(--bg);font-family:-apple-system,"PingFang TC","Noto Sans TC"
 .cfg-hint{font-size:12px;color:var(--text3);margin-top:6px;line-height:1.6}
 .sdot2{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
 .sdot2.ok{background:var(--green)}.sdot2.err{background:var(--red)}.sdot2.idle{background:var(--text3)}
+.btn-assign{padding:10px 13px;background:var(--green-l);color:#166534;border:1px solid #BBF7D0;border-radius:var(--rsm);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn-assign:disabled{opacity:.5;cursor:not-allowed}
 
 /* LOADING */
 .loading{text-align:center;padding:32px;color:var(--text3);font-size:14px}
@@ -177,6 +179,7 @@ body{background:var(--bg);font-family:-apple-system,"PingFang TC","Noto Sans TC"
   <div class="date-bar">
     <input type="date" id="sch-date" onchange="loadSchedule()">
     <button class="btn-today" onclick="setToday('sch-date',loadSchedule)">今天</button>
+    <button class="btn-assign" onclick="autoAssign()" id="assign-btn" title="將當日未分配預約自動套用規則">⚡ 自動分配</button>
   </div>
   <div id="clinic-banner"></div>
   <div id="leave-banner"></div>
@@ -751,6 +754,51 @@ async function testConn(){
   }catch(e){
     el.innerHTML=`<span class="sdot2 err"></span>連線失敗：${e.message}`;
   }
+}
+
+// ── AUTO ASSIGN ──────────────────────────────────────────────
+async function autoAssign() {
+  const dv  = document.getElementById("sch-date").value;
+  const btn = document.getElementById("assign-btn");
+  if (!dv) { alert("請先選擇日期"); return; }
+
+  // Count unassigned
+  const unassigned = scheduleCache.filter(b => !b.staff || b.staff === "" || b.staff === "—");
+  if (unassigned.length === 0) {
+    alert("今日所有預約都已有負責人員，不需要自動分配。");
+    return;
+  }
+
+  if (!confirm(`將對 ${unassigned.length} 筆未分配預約套用規則，確定執行？`)) return;
+
+  btn.disabled = true;
+  btn.textContent = "分配中…";
+
+  try {
+    if (!getUrl()) {
+      // Demo: assign locally
+      const demoDate = fmt(dv);
+      scheduleCache.forEach(b => {
+        if (!b.staff || b.staff === "" || b.staff === "—") {
+          const txArr = b.treatment.split(/[＋+、,，]/).map(s => s.trim());
+          b.staff = assignStaff(b.clientType, txArr, b.note, dv);
+        }
+      });
+      const onLeave = STAFF.filter(s => isOnLeave(s, dv));
+      renderSummary(onLeave);
+      renderTimeline(onLeave);
+      alert(`✅ 示範模式：已在畫面分配 ${unassigned.length} 筆（未寫入 Sheets）`);
+    } else {
+      const res = await apiPost({ action: "autoAssign", date: fmt(dv) });
+      if (res.error) throw new Error(res.error);
+      alert(`✅ 完成！共分配 ${res.updated} 筆預約`);
+      await loadSchedule();
+    }
+  } catch(e) {
+    alert("❌ " + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = "⚡ 自動分配";
 }
 
 // ── INIT ──────────────────────────────────────────────────────
