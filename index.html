@@ -109,6 +109,8 @@ body{background:var(--bg);font-family:-apple-system,"PingFang TC","Noto Sans TC"
 .slot-btn.b1{border-color:#FCD34D}.slot-btn.b2{border-color:#F97316}.slot-btn.b3{border-color:var(--red);color:var(--red)}
 .slot-btn.full{background:var(--bg);color:var(--text3);border-style:dashed;cursor:default}
 .slot-btn.unavail{background:#F3F4F6;color:var(--text3);border-style:dashed;cursor:not-allowed;font-size:11px}
+.slot-btn.slot-offset{background:var(--blue-l);border-color:var(--blue);color:#1E40AF;font-weight:700}
+.slot-btn.slot-offset:hover{background:#DBEAFE}
 .slot-btn.sel{background:var(--accent);border-color:var(--accent);color:#FFF}
 .dot-row{display:flex;gap:2px;justify-content:center;margin-top:3px}
 .sdot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.4}
@@ -196,7 +198,8 @@ body{background:var(--bg);font-family:-apple-system,"PingFang TC","Noto Sans TC"
       <div class="field"><label>新 / 舊客</label><select id="b-type" onchange="onFormChange()"><option value="舊客">舊客</option><option value="新客">新客</option></select></div>
     </div>
     <div class="field"><label>電話（選填）</label><input type="tel" id="b-phone" placeholder="0912345678"></div>
-    <div class="field"><label>同行者 / 備注</label><input type="text" id="b-note" placeholder="例：男友林駿閎、怕痛、Polly友" oninput="onFormChange()"></div>
+    <div class="field"><label>同行者</label><input type="text" id="b-companion" placeholder="例：男友林駿閎、媽媽一起來" oninput="onFormChange()"></div>
+    <div class="field"><label>備注</label><input type="text" id="b-note" placeholder="例：怕痛、Polly友、要趕時間" oninput="onFormChange()"></div>
   </div>
 
   <div class="card">
@@ -277,20 +280,17 @@ const STAFF_CLS = {Polly:"polly",Irene:"irene","小蘇":"su",Gina:"gina","菜菜
 const TREATMENTS = [
   {l:"腋下除毛",c:"除毛"},{l:"小腿除毛",c:"除毛"},{l:"大腿除毛",c:"除毛"},
   {l:"手臂除毛",c:"除毛"},{l:"全臉除毛",c:"除毛"},{l:"鬍子",c:"除毛"},
-  {l:"VIO",c:"除毛"},{l:"VBO",c:"除毛"},
-  {l:"皮秒",c:"雷射"},{l:"皮秒蜂巢",c:"雷射"},{l:"水飛梭",c:"雷射"},
-  {l:"除刺青",c:"雷射"},{l:"靜脈雷射",c:"雷射"},
+  {l:"VIO",c:"除毛"},{l:"VBO",c:"除毛"},{l:"子母線",c:"除毛"},
+  {l:"皮秒",c:"雷射"},{l:"皮秒蜂巢",c:"雷射"},{l:"除刺青",c:"雷射"},
   {l:"肉毒",c:"注射"},{l:"填充",c:"注射"},{l:"玻尿酸",c:"注射"},
-  {l:"水光針",c:"注射"},{l:"消脂針",c:"注射"},{l:"熊貓針",c:"注射"},
-  {l:"精靈針",c:"注射"},{l:"鼻雕",c:"注射"},
-  {l:"埋線",c:"提拉"},{l:"子母線",c:"提拉"},{l:"電波",c:"提拉"},
-  {l:"音波",c:"提拉"},{l:"鳳凰電波",c:"提拉"},
-  {l:"Onda",c:"能量"},{l:"Onda Pro",c:"能量"},
-  {l:"清粉刺",c:"美療"},{l:"美療",c:"美療"},{l:"疤痕修復",c:"美療"},
+  {l:"水光針",c:"注射"},{l:"消脂針",c:"注射"},
+  {l:"埋線",c:"提拉"},{l:"電波",c:"提拉"},{l:"音波",c:"提拉"},
+  {l:"鳳凰電波",c:"提拉"},{l:"鼻雕",c:"提拉"},{l:"Onda Pro",c:"提拉"},
+  {l:"水飛梭",c:"美療"},{l:"清粉刺",c:"美療"},{l:"疤痕修復",c:"美療"},
   {l:"猛健樂",c:"點滴"},{l:"防曬點滴",c:"點滴"},{l:"美白點滴",c:"點滴"},
   {l:"保肝點滴",c:"點滴"},{l:"消脂點滴",c:"點滴"},{l:"生日點滴",c:"點滴"},
   {l:"貴婦點滴",c:"點滴"},{l:"嫩膚點滴",c:"點滴"},
-  {l:"諮詢",c:"其他"},
+  {l:"靜脈雷射",c:"其他"},{l:"諮詢",c:"其他"},
 ];
 
 const ANES_TX = ["鬍子","全臉除毛","臉部除毛","VIO","VBO","皮秒","皮秒蜂巢","水光針",
@@ -569,7 +569,8 @@ async function loadSlots(){
 
   if(!getUrl()){renderDemoSlots(dv);return;}
   try{
-    const data=await api({action:"getSlots",date:dk,treatments:txArr.join(",")});
+    const companion=document.getElementById("b-companion")?.value||"";
+    const data=await api({action:"getSlots",date:dk,treatments:txArr.join(","),companion});
     slotsData=data; renderSlots(data,dv);
   }catch(e){
     sa.innerHTML=`<div style="font-size:13px;color:var(--red);margin-top:8px">${e.message}</div>`;
@@ -579,13 +580,22 @@ async function loadSlots(){
 function renderDemoSlots(dv){
   const demo={
     slots:[
-      {time:"12:30",bookingCount:0,available:true},
-      {time:"13:00",bookingCount:1,available:true},{time:"13:30",bookingCount:0,available:true},
-      {time:"14:00",bookingCount:2,available:true},{time:"14:30",bookingCount:0,available:true},
-      {time:"15:00",bookingCount:3,available:true},{time:"15:30",bookingCount:1,available:true},
-      {time:"16:00",bookingCount:0,available:true},{time:"16:30",bookingCount:4,available:true},
-      {time:"17:00",bookingCount:5,available:false},{time:"17:30",bookingCount:0,available:true},
-      {time:"18:00",bookingCount:1,available:true},{time:"18:30",bookingCount:0,available:true},
+      {time:"12:30",bookingCount:0,available:true,restricted:false,isOffset:false},
+      {time:"13:00",bookingCount:1,available:true,restricted:false,isOffset:false},
+      {time:"13:30",bookingCount:0,available:true,restricted:false,isOffset:false},
+      {time:"14:00",bookingCount:2,available:true,restricted:false,isOffset:false},
+      {time:"14:15",bookingCount:0,available:true,restricted:false,isOffset:true},
+      {time:"14:30",bookingCount:0,available:true,restricted:false,isOffset:false},
+      {time:"15:00",bookingCount:2,available:true,restricted:false,isOffset:false},
+      {time:"15:15",bookingCount:0,available:true,restricted:false,isOffset:true},
+      {time:"15:30",bookingCount:1,available:true,restricted:false,isOffset:false},
+      {time:"16:00",bookingCount:0,available:true,restricted:false,isOffset:false},
+      {time:"16:30",bookingCount:1,available:true,restricted:false,isOffset:false},
+      {time:"17:00",bookingCount:0,available:true,restricted:false,isOffset:false},
+      {time:"17:30",bookingCount:0,available:true,restricted:false,isOffset:false},
+      {time:"18:00",bookingCount:1,available:true,restricted:false,isOffset:false},
+      {time:"18:30",bookingCount:2,available:true,restricted:false,isOffset:false},
+      {time:"18:45",bookingCount:0,available:true,restricted:false,isOffset:true},
     ],
     hasClinic:true,needsDoctor:true,needsAnes:true,
     anesBuffer:true,
@@ -597,7 +607,7 @@ function renderDemoSlots(dv){
 
 function renderSlots(data,dv){
   const sa=document.getElementById("slot-area");
-  const{slots,hasClinic,needsDoctor:nd,needsAnes:na,clinic,anesBuffer}=data;
+  const{slots,hasClinic,needsDoctor:nd,needsAnes:na,clinic,anesBuffer,capacityNote,withFriend}=data;
 
   if(nd&&!hasClinic){
     sa.innerHTML=`<div style="font-size:13px;color:var(--red);padding:10px;background:var(--red-l);border-radius:var(--rsm);margin-top:8px">⚠ 此療程需要醫師在場，但當日無門診。請改選其他日期。</div>`;
@@ -607,21 +617,37 @@ function renderSlots(data,dv){
   let hint="";
   if(clinic){
     hint=`門診時段 ${clinic.start}–${clinic.end}`;
-    if(na) hint+=`　上麻項目最早可約 ${minutesToTime((data.clinicStartMin||0)-30)} 起`;
-    hint+=`　最晚預約 ${minutesToTime((data.clinicEndMin||0))}`;
+    if(na) hint+=`　上麻可提早至 ${minutesToTime((data.clinicStartMin||0)-30)}`;
+    hint+=`　最晚 ${minutesToTime((data.clinicEndMin||0))}`;
   }
 
   // Check leave
   const onLeave=STAFF.filter(s=>isOnLeave(s,dv));
   const leaveHint=onLeave.length?`<div style="font-size:12px;color:var(--red);margin-top:6px">⚠ 今日 ${onLeave.join("、")} 請假，系統分配時將自動跳過</div>`:"";
+  const friendHint=withFriend?`<div style="font-size:12px;color:var(--blue);margin-top:4px">👥 含同行者，諮詢師保留 1.5 小時</div>`:"";
+  const capHint=capacityNote?`<div style="font-size:12px;color:var(--amber);margin-top:4px">⚡ ${capacityNote}</div>`:"";
 
-  sa.innerHTML=(hint?`<div class="slot-hint">${hint}</div>`:"")+leaveHint+
+  sa.innerHTML=(hint?`<div class="slot-hint">${hint}</div>`:"")+leaveHint+(friendHint||"")+(capHint||"")+
     `<div class="slot-grid">`+(slots||[]).map(s=>{
       if(!s.available) return`<div class="slot-btn full">${s.time}</div>`;
-      if(s.restricted) return`<div class="slot-btn unavail" title="${s.reason||""}">${s.time}<br>不可約</div>`;
-      const bc=s.bookingCount>=4?"b3":s.bookingCount>=3?"b2":s.bookingCount>=2?"b1":"";
+      if(s.restricted) return`<div class="slot-btn unavail" title="${s.reason||""}">${s.time}<br>${s.reason||"不可約"}</div>`;
+      const bc=s.bookingCount>=2?"b3":s.bookingCount>=1?"b1":"";
       const dots=s.bookingCount>0?`<div class="dot-row">${Array(Math.min(s.bookingCount,5)).fill('<span class="sdot"></span>').join("")}</div>`:"";
-      return`<div class="slot-btn ${bc}" onclick="selectSlot('${s.time}',this)">${s.time}${dots}</div>`;
+      // Full slot: show as unavailable but label clearly
+      if (s.bookingCount >= 2 && !s.isOffset) {
+        return`<div class="slot-btn full" title="已滿2位">${s.time}<div class="dot-row">${Array(2).fill('<span class="sdot"></span>').join("")}</div></div>`;
+      }
+      // Offset slot (15-min): highlight as alternative
+      if (s.isOffset && !s.restricted) {
+        return`<div class="slot-btn slot-offset" onclick="selectSlot('${s.time}',this)" title="插入時段（錯開15分鐘）">${s.time}<div style="font-size:9px;margin-top:2px;opacity:.7">+15</div></div>`;
+      }
+      // Restricted (dr-heavy / multi-hair rule)
+      if (s.restricted) {
+        return`<div class="slot-btn unavail" title="${s.reason}">${s.time}<div style="font-size:9px;margin-top:1px;opacity:.7">${s.reason.slice(0,6)}</div></div>`;
+      }
+      // Normal available slot
+      const dots2=s.bookingCount>0?`<div class="dot-row">${Array(Math.min(s.bookingCount,5)).fill('<span class="sdot"></span>').join("")}</div>`:"";
+      return`<div class="slot-btn ${bc}" onclick="selectSlot('${s.time}',this)">${s.time}${dots2}</div>`;
     }).join("")+`</div>`;
   selectedSlot=""; onFormChange();
 }
@@ -677,7 +703,8 @@ async function submitBooking(){
   const txArr=[...selectedTx];
   const dv=document.getElementById("b-date").value;
   const ct=document.getElementById("b-type").value;
-  const noteFull=[note,phone?`📞 ${phone}`:""].filter(Boolean).join(" ｜ ");
+  const companion=document.getElementById("b-companion")?.value.trim()||"";
+  const noteFull=[note,companion?`同行：${companion}`:"",phone?`📞 ${phone}`:""].filter(Boolean).join(" ｜ ");
   if(!name||!selectedSlot||!txArr.length){alert("請填寫姓名、選療程及時段");return;}
   const btn=document.getElementById("submit-btn");
   btn.disabled=true; btn.textContent="送出中…";
@@ -695,7 +722,7 @@ async function submitBooking(){
     // Reset
     selectedTx.clear(); selectedSlot="";
     document.querySelectorAll(".tx-chip.sel").forEach(c=>c.classList.remove("sel"));
-    ["b-name","b-phone","b-note","b-date"].forEach(id=>document.getElementById(id).value="");
+    ["b-name","b-phone","b-note","b-date","b-companion"].forEach(id=>{if(document.getElementById(id))document.getElementById(id).value="";});
     document.getElementById("slot-area").innerHTML="";
     document.getElementById("result-area").innerHTML="";
   }catch(e){alert("❌ "+e.message);}
