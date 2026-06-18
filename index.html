@@ -768,8 +768,34 @@ function toggleLeaveDay(staff,day,month,el){
   localStorage.setItem(`leave_${month}`,JSON.stringify(data));
 }
 
-function saveLeave(){
-  alert("✅ 休假資料已儲存在本機\n排班與新增預約時會自動套用。");
+async function saveLeave(){
+  const month = document.getElementById("leave-month").value||thisMonth();
+  const data  = getLeaveData(month);
+  if(!getUrl()){
+    alert("✅ 休假資料已儲存（本機）\n請設定 Apps Script 網址以同步到 Sheets。");
+    return;
+  }
+  const btn = document.querySelector("#page-leave .btn-primary");
+  btn.disabled=true; btn.textContent="同步中…";
+  try{
+    const controller = new AbortController();
+    setTimeout(()=>controller.abort(), 5000);
+    const res = await fetch(getUrl(),{
+      method:"POST",
+      body: JSON.stringify({action:"saveLeave", month, data}),
+      signal: controller.signal
+    });
+    const json = await res.json().catch(()=>({}));
+    if(json.error) throw new Error(json.error);
+    alert(`✅ ${month} 休假已同步到 Sheets`);
+  }catch(e){
+    if(e.name==="AbortError"){
+      alert("⚠ 同步逾時，但資料可能已寫入，請確認 Sheets。");
+    } else {
+      alert("❌ 同步失敗："+e.message);
+    }
+  }
+  btn.disabled=false; btn.textContent="儲存本月休假";
 }
 
 // ── CONNECTION TEST ───────────────────────────────────────────
