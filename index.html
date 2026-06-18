@@ -353,25 +353,36 @@ function setToday(id, cb){
 // ── STAFF ASSIGN ──────────────────────────────────────────────
 function assignStaff(clientType, txArr, note, dateStr){
   const avail  = availableStaff(dateStr);
-  const noteLC = (note||"").toLowerCase();
-  if(noteLC.includes("polly")  && avail.includes("Polly"))  return "Polly";
-  if(noteLC.includes("gina")   && avail.includes("Gina"))   return "Gina";
-  if(isDrip(txArr)             && avail.includes("小蘇"))   return "小蘇";
+  const isNew  = clientType==="新客";
 
-  const isHair = txArr.every(t=>["腋下","小腿","大腿","手臂","手指","腳趾","腳背","半背","全背"].some(h=>t.includes(h)));
-  const hasHigh = txArr.some(t=>["填充","玻尿酸","鼻雕","電波","音波","鳳凰電波","埋線","子母線","熊貓針","精靈針","除刺青"].some(h=>t.includes(h)));
-  const hasConsult = txArr.some(t=>t.includes("諮詢"));
-  const isNew = clientType==="新客";
+  const gi  = avail.filter(s=>s==="Gina"||s==="菜菜");
+  const gi2 = gi.length>0 ? gi[Math.floor(Math.random()*gi.length)] : (avail[0]||"Gina");
 
-  const gi = avail.filter(s=>s==="Gina"||s==="菜菜");
-  const gi2 = gi.length>0? gi[Math.floor(Math.random()*gi.length)] : (avail[0]||"Gina");
+  const HIGH_VALUE = ["填充","玻尿酸","鼻雕","電波","音波","鳳凰電波","埋線","鼻線","下巴填充","膠原蛋白","Onda臉","Onda身體","逆時針","晶亮瓷","淚溝","法令紋"];
+  const isHairOnly = txArr.every(t=>["腋下","小腿","大腿","手臂","手指","腳趾","腳背","半背","全背","VIO","VBO","鬍子","全臉"].some(h=>t.includes(h)));
+  const hasHigh    = txArr.some(t=>HIGH_VALUE.some(h=>t.includes(h)));
+  const hasConsult = txArr.some(t=>t.includes("諮詢")||t.includes("回診"));
+  const hasCompanion = (note||"").includes("朋友")||(note||"").includes("男友")||(note||"").includes("同行")||(note||"").includes("夫妻")||(note||"").includes("母女");
 
-  if(isNew && isHair && !hasHigh) return gi2;
-  if(isNew || hasHigh || hasConsult){
-    if(hasHigh){ return avail.includes("Polly")?"Polly":(avail.includes("Irene")?"Irene":gi2); }
-    if(isNew){   return avail.includes("Polly")?"Polly":(avail.includes("Irene")?"Irene":gi2); }
-    return avail.includes("Irene")?"Irene":(avail.includes("Polly")?"Polly":gi2);
+  // 1. 點滴 → 小蘇
+  if(isDrip(txArr) && avail.includes("小蘇")) return "小蘇";
+  // 2. 疤痕修復 → Irene
+  if(txArr.some(t=>t.includes("疤痕修復")) && avail.includes("Irene")) return "Irene";
+  // 3. 水飛梭/芝潤水光 → Gina優先
+  if(txArr.some(t=>t.includes("水飛梭")||t.includes("芝潤水光"))){
+    return avail.includes("Gina") ? "Gina" : (avail.includes("Irene")?"Irene":gi2);
   }
+  // 4. 新客純除毛 → Gina/菜菜
+  if(isNew && isHairOnly && !hasHigh) return gi2;
+  // 5. 有諮詢 或 高單價+同行 → Irene優先，沒有才給Polly
+  if(hasConsult || (hasHigh && hasCompanion)){
+    return avail.includes("Irene") ? "Irene" : (avail.includes("Polly")?"Polly":gi2);
+  }
+  // 6. 高單價非諮詢（回診電波等）→ Irene
+  if(hasHigh){
+    return avail.includes("Irene") ? "Irene" : gi2;
+  }
+  // 7. 一般療程 → Gina/菜菜
   return gi2;
 }
 
