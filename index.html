@@ -791,28 +791,29 @@ async function submitBooking(){
   if(anesOverride === null){alert("請選擇是否需要上麻藥");return;}
   const btn=document.getElementById("submit-btn");
   btn.disabled=true; btn.textContent="送出中…";
+  const maFinal = anesOverride !== null ? anesOverride : needsAnes(txArr);
   const payload={action:"addBooking",date:fmt(dv),time:selectedSlot,name,
-    treatment:txArr.join("＋"),staff:selectedStaff,note:noteFull,clientType:ct,birthday};
-  try{
-    if(!getUrl()){
-      await new Promise(r=>setTimeout(r,500));
-      alert(`✅ 示範模式\n${name} ${fmt(dv)} ${selectedSlot} → ${selectedStaff}\n（請先設定 Apps Script 網址）`);
-    } else {
-      const res=await apiPost(payload);
-      if(res.error) throw new Error(res.error);
-      alert(`✅ 預約成功\n${name} ${fmt(dv)} ${selectedSlot}\n負責：${selectedStaff}${res.anesthesia==="麻"?" ｜ 需上麻":""}`);
-    }
-    // Reset
-    selectedTx.clear(); selectedSlot=""; anesOverride=null;
-    setAnes(null);
-    // 重設上麻按鈕外觀
-    const base="padding:8px 20px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;color:var(--text2);font-family:inherit";
-    ["anes-yes","anes-no"].forEach(id=>{if(document.getElementById(id))document.getElementById(id).style.cssText=base;});
-    document.querySelectorAll(".tx-chip.sel").forEach(c=>c.classList.remove("sel"));
-    ["b-name","b-contact","b-note","b-date","b-companion"].forEach(id=>{if(document.getElementById(id))document.getElementById(id).value="";});
-    document.getElementById("slot-area").innerHTML="";
-    document.getElementById("result-area").innerHTML="";
-  }catch(e){alert("❌ "+e.message);}
+    birthday:contact, treatment:txArr.join("＋"),staff:selectedStaff,
+    anesthesia: maFinal ? "麻" : "X",
+    note:noteFull, clientType:ct};
+  // 立即顯示成功，背景寫入
+  const ma2 = maFinal ? "｜需上麻" : "";
+  if(!getUrl()){
+    alert(`✅ 示範模式\n${name} ${fmt(dv)} ${selectedSlot} → ${selectedStaff}`);
+  } else {
+    alert(`✅ 預約已送出\n${name} ${fmt(dv)} ${selectedSlot}\n負責：${selectedStaff}${ma2}`);
+    // 背景寫入，不等待
+    fetch(getUrl(),{method:"POST",body:JSON.stringify(payload)}).catch(e=>console.warn("寫入失敗",e));
+  }
+  // 立即重設
+  selectedTx.clear(); selectedSlot=""; anesOverride=null;
+  setAnes(null);
+  const base2="padding:8px 20px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;color:var(--text2);font-family:inherit";
+  ["anes-yes","anes-no"].forEach(id=>{if(document.getElementById(id))document.getElementById(id).style.cssText=base2;});
+  document.querySelectorAll(".tx-chip.sel").forEach(c=>c.classList.remove("sel"));
+  ["b-name","b-contact","b-note","b-date","b-companion"].forEach(id=>{if(document.getElementById(id))document.getElementById(id).value="";});
+  document.getElementById("slot-area").innerHTML="";
+  document.getElementById("result-area").innerHTML="";
   btn.disabled=false; btn.textContent="確認預約";
 }
 
