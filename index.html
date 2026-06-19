@@ -673,7 +673,8 @@ function renderSlots(data,dv){
   } else if(clinic && data.clinicStartMin != null){
     // 需醫師項目 → 依上麻與否決定時段
     validStart = anesActive ? data.clinicStartMin - 30 : data.clinicStartMin;
-    validEnd   = anesActive ? data.clinicEndMin - 60   : data.clinicEndMin - 30;
+    // 最晚到達時間：門診結束前30分鐘（上麻或不上麻都一樣）
+    validEnd   = data.clinicEndMin - 30;
   }
 
   // 過濾時段
@@ -690,10 +691,11 @@ function renderSlots(data,dv){
     hint=`門診時段 ${clinic.start}–${clinic.end}`;
     if(data.clinicStartMin != null){
       if(anesActive){
-        hint+=`　上麻最早 ${minutesToTime(validStart)}　最晚 ${minutesToTime(validEnd)}`;
+        hint+=`　上麻最早 ${minutesToTime(validStart)}`;
       } else {
-        hint+=`　最早 ${minutesToTime(validStart)}　最晚 ${minutesToTime(validEnd)}`;
+        hint+=`　最早 ${minutesToTime(validStart)}`;
       }
+      hint+=`　最晚 ${minutesToTime(validEnd)}`;
     }
   }
 
