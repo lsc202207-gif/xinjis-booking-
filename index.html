@@ -767,14 +767,15 @@ function updateResult(){
   const cls=STAFF_CLS[selectedStaff]||"polly";
   const onLeave=availableStaff(dv).length<STAFF.length;
   el.innerHTML=`<div class="result-card">
-    <div class="rl">建議安排</div>
-    <div class="rs" style="color:var(--${cls})">${selectedStaff}</div>
+    <div class="rl">預約確認</div>
+    <div class="rs" style="font-size:16px;color:var(--text)">${dv} ${selectedSlot}</div>
     <div class="rrow">
-      <span class="rchip">${dv} ${selectedSlot}</span>
       ${ma?'<span class="rchip rma">需上麻藥</span>':""}
       ${ct==="新客"?'<span class="rchip" style="background:var(--green-l);color:#166534">新客</span>':""}
       ${onLeave?'<span class="rchip" style="background:var(--red-l);color:var(--red)">今日有人請假</span>':""}
     </div>
+    ${needsConsultFirst?'<div style="margin-top:8px;padding:8px 10px;background:var(--amber-l);border-radius:var(--rsm);font-size:13px;color:#92400E">⚠ 新客皮秒蜂巢：請先安排諮詢師諮詢</div>':""}
+    <div style="margin-top:8px;font-size:12px;color:var(--text3)">負責人員將於當天依人力狀況自動分配</div>
   </div>`;
 }
 
@@ -799,15 +800,15 @@ async function submitBooking(){
   btn.disabled=true; btn.textContent="送出中…";
   const maFinal = anesOverride !== null ? anesOverride : needsAnes(txArr);
   const payload={action:"addBooking",date:fmt(dv),time:selectedSlot,name,
-    birthday:contact, treatment:txArr.join("＋"),staff:selectedStaff,
+    birthday:contact, treatment:txArr.join("＋"),staff:"",
     anesthesia: maFinal ? "麻" : "X",
     note:noteFull, clientType:ct};
   // 立即顯示成功，背景寫入
   const ma2 = maFinal ? "｜需上麻" : "";
   if(!getUrl()){
-    alert(`✅ 示範模式\n${name} ${fmt(dv)} ${selectedSlot} → ${selectedStaff}`);
+    alert(`✅ 示範模式\n${name} ${fmt(dv)} ${selectedSlot}`);
   } else {
-    alert(`✅ 預約已送出\n${name} ${fmt(dv)} ${selectedSlot}\n負責：${selectedStaff}${ma2}`);
+    alert(`✅ 預約已送出\n${name} ${fmt(dv)} ${selectedSlot}${ma2}`);
     // 背景寫入，不等待
     fetch(getUrl(),{method:"POST",body:JSON.stringify(payload)}).catch(e=>console.warn("寫入失敗",e));
   }
