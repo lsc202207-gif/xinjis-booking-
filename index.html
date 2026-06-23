@@ -765,6 +765,7 @@ function updateResult(){
   selectedStaff=assignStaff(ct,txArr,note,dv);
   const ma = anesOverride !== null ? anesOverride : needsAnes(txArr);
   const cls=STAFF_CLS[selectedStaff]||"polly";
+  const needsConsultFirst = ct==="新客" && txArr.some(t=>t.includes("皮秒蜂巢"));
   const onLeave=availableStaff(dv).length<STAFF.length;
   el.innerHTML=`<div class="result-card">
     <div class="rl">預約確認</div>
