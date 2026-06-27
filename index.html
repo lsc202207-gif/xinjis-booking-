@@ -270,7 +270,7 @@ body{background:var(--bg);font-family:-apple-system,"PingFang TC","Noto Sans TC"
 
   <div class="card">
     <div class="card-title">日期與時段</div>
-    <div class="field"><label>日期</label><input type="date" id="b-date" onchange="loadSlots()"></div>
+    <div class="field"><label>日期</label><input type="date" id="b-date" onchange="onDateChange()" oninput="onDateChange()"></div>
     <div id="slot-area"></div>
   </div>
 
@@ -636,6 +636,7 @@ function setAnes(val){
     }
   }
   updateResult();
+  _lastDate = ""; // 強制重新查詢
   loadSlots();
 }
 
@@ -658,6 +659,12 @@ function addCustomTx(e){
   inp.value=""; loadSlots(); onFormChange();
 }
 
+let _lastDate = "";
+function onDateChange(){
+  const dv = document.getElementById("b-date").value;
+  if(dv && dv !== _lastDate){ _lastDate = dv; loadSlots(); }
+}
+
 async function loadSlots(){
   const dv=document.getElementById("b-date").value;
   const sa=document.getElementById("slot-area");
@@ -671,11 +678,6 @@ async function loadSlots(){
     const companion=document.getElementById("b-companion")?.value||"";
     const anesParam = anesOverride===true?"yes":anesOverride===false?"no":"auto";
     const data=await api({action:"getSlots",date:dk,treatments:txArr.join(","),companion,anesOverride:anesParam});
-    console.log("getSlots response:", JSON.stringify({
-      date:dk, hasClinic:data.hasClinic, needsDoctor:data.needsDoctor,
-      clinicStart:data.clinicStartMin, clinicEnd:data.clinicEndMin,
-      slotsCount:data.slots?.length, firstSlot:data.slots?.[0]?.time
-    }));
     slotsData=data; renderSlots(data,dv);
   }catch(e){
     sa.innerHTML=`<div style="font-size:13px;color:var(--red);margin-top:8px">${e.message}</div>`;
