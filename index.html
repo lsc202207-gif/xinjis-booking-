@@ -29,7 +29,7 @@ body{background:var(--bg);font-family:-apple-system,"PingFang TC","Noto Sans TC"
 /* NAV */
 .nav{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;height:56px;position:sticky;top:0;z-index:100;gap:8px}
 .nav-logo{font-size:15px;font-weight:600;flex:1}.nav-logo span{color:var(--accent)}
-.tab-bar{display:flex;gap:4px;background:var(--bg);border-radius:var(--rsm);padding:3px}
+.tab-bar{display:flex;gap:2px;background:var(--bg);border-radius:var(--rsm);padding:3px;flex-wrap:nowrap}
 .tab{padding:5px 12px;border-radius:6px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;color:var(--text2);transition:all .15s}
 .tab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 
@@ -162,6 +162,54 @@ body{background:var(--bg);font-family:-apple-system,"PingFang TC","Noto Sans TC"
 .loading{text-align:center;padding:32px;color:var(--text3);font-size:14px}
 .spin{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:7px}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── 手機版調整 ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+
+  /* NAV：logo 縮小，tab 文字更小 */
+  .nav { padding: 0 10px; height: 52px; }
+  .nav-logo { font-size: 14px; }
+  .tab { padding: 5px 8px; font-size: 12px; }
+
+  /* 排班人員統計：5格太擠，字縮小 */
+  .summary-strip { gap: 5px; }
+  .staff-chip .sname { font-size: 10px; }
+  .staff-chip .scount { font-size: 16px; }
+
+  /* 時段選擇：4欄改3欄 */
+  .slot-grid { grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .slot-btn { font-size: 12px; padding: 8px 2px; }
+
+  /* 姓名/新舊客 兩欄改一欄 */
+  .row2 { grid-template-columns: 1fr; gap: 8px; }
+
+  /* 預約卡片時間欄縮小 */
+  .tc { min-width: 36px; }
+  .tc .tt { font-size: 12px; }
+
+  /* 上麻按鈕排版 */
+  #anes-yes, #anes-no { padding: 8px 14px; font-size: 13px; }
+
+  /* result card */
+  .result-card .rs { font-size: 16px; }
+  .rrow { gap: 6px; }
+  .rchip { font-size: 12px; padding: 4px 9px; }
+
+  /* 送出按鈕 */
+  .btn-primary { font-size: 15px; padding: 14px; }
+
+  /* 預約詳情 modal */
+  .modal { padding: 16px 14px 28px; }
+  .modal-title { font-size: 16px; }
+
+  /* tx-chip 療程標籤 */
+  .tx-chip { padding: 6px 10px; font-size: 12px; }
+
+  /* 休假格子 */
+  .leave-grid { grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .leave-col .lname { font-size: 10px; }
+  .leave-day { font-size: 11px; padding: 3px 2px; }
+}
 </style>
 </head>
 <body>
@@ -623,6 +671,11 @@ async function loadSlots(){
     const companion=document.getElementById("b-companion")?.value||"";
     const anesParam = anesOverride===true?"yes":anesOverride===false?"no":"auto";
     const data=await api({action:"getSlots",date:dk,treatments:txArr.join(","),companion,anesOverride:anesParam});
+    console.log("getSlots response:", JSON.stringify({
+      date:dk, hasClinic:data.hasClinic, needsDoctor:data.needsDoctor,
+      clinicStart:data.clinicStartMin, clinicEnd:data.clinicEndMin,
+      slotsCount:data.slots?.length, firstSlot:data.slots?.[0]?.time
+    }));
     slotsData=data; renderSlots(data,dv);
   }catch(e){
     sa.innerHTML=`<div style="font-size:13px;color:var(--red);margin-top:8px">${e.message}</div>`;
