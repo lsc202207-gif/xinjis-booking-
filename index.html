@@ -678,6 +678,7 @@ async function loadSlots(){
     const companion=document.getElementById("b-companion")?.value||"";
     const anesParam = anesOverride===true?"yes":anesOverride===false?"no":"auto";
     const data=await api({action:"getSlots",date:dk,treatments:txArr.join(","),companion,anesOverride:anesParam});
+    console.log("slots sample:", JSON.stringify(data.slots?.slice(0,5)));
     slotsData=data; renderSlots(data,dv);
   }catch(e){
     sa.innerHTML=`<div style="font-size:13px;color:var(--red);margin-top:8px">${e.message}</div>`;
