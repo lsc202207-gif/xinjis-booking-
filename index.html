@@ -352,9 +352,10 @@ const TREATMENTS = [
   {l:"靜脈雷射",c:"其他"},{l:"諮詢",c:"其他"},
 ];
 
-const ANES_TX = ["鬍子","全臉除毛","臉部除毛","VIO","VBO","皮秒","皮秒蜂巢","水光針",
-  "填充","玻尿酸","熊貓針","精靈針","子母線","埋線","電波","音波","鳳凰電波",
-  "消脂針","鼻雕","除刺青","靜脈雷射","膠原蛋白","下巴填充","鼻線"];
+const ANES_TX = ["鬍子","VIO","VBO","皮秒","皮秒蜂巢","水光針",
+  "填充","玻尿酸","熊貓針","精靈針","埋線","音波",
+  "消脂針","鼻雕","除刺青","膠原蛋白","下巴填充","鼻線","晶亮瓷"];
+// 不需上麻：電波、Onda、腋下、小腿、大腿、手臂、全臉、子母線、肉毒
 const DRIP_TX  = ["猛健樂","點滴"];
 // 不需醫師（所有除毛都需要醫師，不在此列）
 const NON_DR = [
@@ -678,7 +679,6 @@ async function loadSlots(){
     const companion=document.getElementById("b-companion")?.value||"";
     const anesParam = anesOverride===true?"yes":anesOverride===false?"no":"auto";
     const data=await api({action:"getSlots",date:dk,treatments:txArr.join(","),companion,anesOverride:anesParam});
-    console.log("slots sample:", JSON.stringify(data.slots?.slice(0,5)));
     slotsData=data; renderSlots(data,dv);
   }catch(e){
     sa.innerHTML=`<div style="font-size:13px;color:var(--red);margin-top:8px">${e.message}</div>`;
